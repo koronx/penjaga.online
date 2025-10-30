@@ -1,0 +1,44 @@
+2025-10-30 09:51:02 pid:1991 Workerman[index.php] restart
+2025-10-30 09:51:02 pid:1991 Workerman[index.php] is stopping ...
+2025-10-30 09:51:02 pid:1991 Workerman[index.php] stop success
+2025-10-30 09:52:00 pid:2063 Workerman[index.php] restart
+2025-10-30 09:52:00 pid:2063 Workerman[index.php] is stopping ...
+2025-10-30 09:52:00 pid:1991 Workerman[index.php] received signal SIGINT
+2025-10-30 09:52:00 pid:1991 Workerman[index.php] stopping
+2025-10-30 09:52:01 pid:1991 Workerman[index.php] has been stopped
+2025-10-30 09:52:01 pid:2063 Workerman[index.php] stop success
+2025-10-30 09:55:52 pid:2268 Workerman[index.php] restart
+2025-10-30 09:55:52 pid:2268 Workerman[index.php] is stopping ...
+2025-10-30 09:55:52 pid:2063 Workerman[index.php] received signal SIGINT
+2025-10-30 09:55:52 pid:2063 Workerman[index.php] stopping
+2025-10-30 09:55:53 pid:2063 Workerman[index.php] has been stopped
+2025-10-30 09:55:53 pid:2268 Workerman[index.php] stop success
+2025-10-30 09:59:19 pid:2268 Workerman[index.php] received signal SIGINT
+2025-10-30 09:59:19 pid:2268 Workerman[index.php] stopping
+2025-10-30 09:59:19 pid:2268 Workerman[index.php] has been stopped
+2025-10-30 09:59:20 pid:2608 Workerman[index.php] restart
+2025-10-30 09:59:20 pid:2608 Workerman[index.php] is stopping ...
+2025-10-30 09:59:20 pid:2608 Workerman[index.php] stop success
+2025-10-30 10:08:06 pid:2608 Workerman[index.php] received signal SIGINT
+2025-10-30 10:08:06 pid:2608 Workerman[index.php] stopping
+2025-10-30 10:08:06 pid:2608 Workerman[index.php] has been stopped
+2025-10-30 10:08:07 pid:3060 Workerman[index.php] restart
+2025-10-30 10:08:07 pid:3060 Workerman[index.php] is stopping ...
+2025-10-30 10:08:07 pid:3060 Workerman[index.php] stop success
+2025-10-30 10:11:30 pid:3060 Workerman[index.php] received signal SIGINT
+2025-10-30 10:11:30 pid:3060 Workerman[index.php] stopping
+2025-10-30 10:11:30 pid:3060 Workerman[index.php] has been stopped
+2025-10-30 10:11:31 pid:3206 Workerman[index.php] restart
+2025-10-30 10:11:31 pid:3206 Workerman[index.php] is stopping ...
+2025-10-30 10:11:31 pid:3206 Workerman[index.php] stop success
+2025-10-30 10:14:02 pid:3206 Workerman[index.php] received signal SIGINT
+2025-10-30 10:14:02 pid:3206 Workerman[index.php] stopping
+2025-10-30 10:14:02 pid:3206 Workerman[index.php] has been stopped
+2025-10-30 10:54:44 pid:1 Workerman[index.php] start in DEBUG mode
+2025-10-30 10:55:23 pid:1 Workerman[index.php] received signal SIGTERM
+2025-10-30 10:55:23 pid:1 Workerman[index.php] stopping
+2025-10-30 10:55:24 pid:1 Workerman[index.php] has been stopped
+2025-10-30 10:56:45 pid:1 Workerman[index.php] start in DEBUG mode
+2025-10-30 11:14:42 pid:1 Workerman[index.php] received signal SIGTERM
+2025-10-30 11:14:42 pid:1 Workerman[index.php] stopping
+2025-10-30 11:14:43 pid:1 Workerman[index.php] has been stopped

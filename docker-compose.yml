@@ -1,0 +1,12 @@
+services:
+  penjaga-dns:
+    container_name: penjaga-dns
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8053:8053/udp"
+      - "8080:8080/tcp"
+    restart: unless-stopped
+    volumes:
+      - ./app:/app
