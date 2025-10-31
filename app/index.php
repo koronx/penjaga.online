@@ -40,9 +40,24 @@ $records = [
 ];
 // --- Helper Functions ---
 
-function saveToCacheAsync($domain, $response)
+function saveToCache($domain, $response)
 {
-    Coroutine::create(function () use ($domain, $response) {
+    if (!is_dir(CACHE_DIR)) {
+        mkdir(CACHE_DIR, 0777, true);
+    }
+    $ttl = extractTTL($response);
+    $data = [
+        'expires' => time() + $ttl,
+        'ttl' => $ttl,
+        'data' => base64_encode($response)
+    ];
+    file_put_contents(getCachePath($domain), json_encode($data));
+    echo "  💾 Cached $domain (TTL={$ttl}s)\n";
+}
+
+function saveToCacheAsync($domain, $qtype, $response)
+{
+    Coroutine::create(function () use ($domain, $qtype, $response) {
         if (!is_dir(CACHE_DIR)) {
             mkdir(CACHE_DIR, 0777, true);
         }
@@ -52,8 +67,8 @@ function saveToCacheAsync($domain, $response)
             'ttl' => $ttl,
             'data' => base64_encode($response)
         ];
-        file_put_contents(getCachePath($domain), json_encode($data));
-        echo "  💾 Cached $domain (TTL={$ttl}s)\n";
+        file_put_contents(getCachePath($domain.'/'.$qtype), json_encode($data));
+        echo "  💾 Cached $domain (TTL={$ttl}s) via Coroutine\n";
     });
 }
 function encodeDomain($domain)
@@ -158,27 +173,14 @@ function buildResponse($query, $domain, $records, $qtype = 1)
 
 function getCachePath($domain)
 {
-    return CACHE_DIR . '/' . md5(strtolower($domain)) . '.json';
+    $cache_path = CACHE_DIR . '/' . md5(strtolower($domain)) . '.json';
+    echo "Cache path for $domain: $cache_path\n";
+    return $cache_path;
 }
 
-function saveToCache($domain, $response)
+function loadFromCache($domain, $qtype)
 {
-    if (!is_dir(CACHE_DIR)) {
-        mkdir(CACHE_DIR, 0777, true);
-    }
-    $ttl = extractTTL($response);
-    $data = [
-        'expires' => time() + $ttl,
-        'ttl' => $ttl,
-        'data' => base64_encode($response)
-    ];
-    file_put_contents(getCachePath($domain), json_encode($data));
-    echo "  💾 Cached $domain (TTL={$ttl}s)\n";
-}
-
-function loadFromCache($domain)
-{
-    $path = getCachePath($domain);
+    $path = getCachePath($domain.'/'.$qtype);
     if (!file_exists($path)) return false;
     $data = json_decode(file_get_contents($path), true);
     if (!$data || time() > $data['expires']) {
@@ -285,25 +287,22 @@ $udpWorker->onMessage = function ($connection, $data) use ($records, &$stats, &$
     }
     
     // === CACHED RECORD ===
-    $cacheFile = __DIR__ . "/dns-cache/" . md5($domain."/".$qtype) . ".bin";
-    if (file_exists($cacheFile)) {
-        $cache = @unserialize(file_get_contents($cacheFile));
-        
-        if ($cache && $cache['expires'] > time()) {
-            $reply = $cache['response'];
-            $reply[0] = $data[0];
-            $reply[1] = $data[1];
+    $cache = loadFromCache($domain, $qtype);
+    if ($cache) {
+        $cache = @unserialize($cache);
+        $reply = $cache['response'];
+        $reply[0] = $data[0];
+        $reply[1] = $data[1];
 
-            // $connection->send($cache['response']);
-            $connection->send($reply);
-            $stats['cache']++;
-            echo "  🗃  Reply (cache) $domain\n";
+        // $connection->send($cache['response']);
+        $connection->send($reply);
+        $stats['cache']++;
+        echo "  🗃  Reply (cache) $domain\n";
 
-            saveStats($stats, $recentQueries);
-            printStats($stats);
+        saveStats($stats, $recentQueries);
+        printStats($stats);
 
-            return;
-        }
+        return;
     }
 
     // === UPSTREAM FORWARD ===
@@ -325,8 +324,7 @@ $udpWorker->onMessage = function ($connection, $data) use ($records, &$stats, &$
             'expires'  => time() + $ttl
         ];
 
-        file_put_contents($cacheFile, serialize($cacheData));
-        echo "  💾 Cached $domain (TTL={$ttl}s)\n";
+        saveToCacheAsync($domain, $qtype, serialize($cacheData));
         $stats['upstream']++;
         echo "  ↩ Reply (upstream cached) $domain\n";
     } else {
