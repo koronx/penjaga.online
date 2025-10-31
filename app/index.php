@@ -1,6 +1,8 @@
 <?php
-use Workerman\Worker;
 require __DIR__ . '/vendor/autoload.php';
+
+use Workerman\Worker;
+use Workerman\Coroutine;
 
 // Jalankan di port 8053 (tidak perlu root)
 $udpWorker = new Worker("udp://0.0.0.0:8053");
@@ -38,6 +40,22 @@ $records = [
 ];
 // --- Helper Functions ---
 
+function saveToCacheAsync($domain, $response)
+{
+    Coroutine::create(function () use ($domain, $response) {
+        if (!is_dir(CACHE_DIR)) {
+            mkdir(CACHE_DIR, 0777, true);
+        }
+        $ttl = extractTTL($response);
+        $data = [
+            'expires' => time() + $ttl,
+            'ttl' => $ttl,
+            'data' => base64_encode($response)
+        ];
+        file_put_contents(getCachePath($domain), json_encode($data));
+        echo "  💾 Cached $domain (TTL={$ttl}s)\n";
+    });
+}
 function encodeDomain($domain)
 {
     $parts = explode('.', $domain);
@@ -306,6 +324,7 @@ $udpWorker->onMessage = function ($connection, $data) use ($records, &$stats, &$
             'response' => $buf,
             'expires'  => time() + $ttl
         ];
+
         file_put_contents($cacheFile, serialize($cacheData));
         echo "  💾 Cached $domain (TTL={$ttl}s)\n";
         $stats['upstream']++;
