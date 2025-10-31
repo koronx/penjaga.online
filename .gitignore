@@ -1,2 +1,5 @@
 /app/dns-cache
 /app/vendor
+app/workerman.log
+app/workerman.index.php.pid
+app/dns-stats.json
