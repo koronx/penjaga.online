@@ -51,3 +51,7 @@
 2025-10-31 09:25:12 pid:1 Workerman[index.php] stopping
 2025-10-31 09:25:14 pid:1 Workerman[index.php] has been stopped
 2025-10-31 09:25:15 pid:1 Workerman[index.php] start in DEBUG mode
+2025-11-03 07:12:12 pid:1 Workerman[index.php] start in DEBUG mode
+2025-11-03 07:12:49 pid:1 Workerman[index.php] received signal SIGTERM
+2025-11-03 07:12:49 pid:1 Workerman[index.php] stopping
+2025-11-03 07:12:50 pid:1 Workerman[index.php] has been stopped
