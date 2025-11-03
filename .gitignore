@@ -3,3 +3,4 @@
 /app/workerman.log
 /app/workerman.index.php.pid
 /app/dns-stats.json
+app/dns-stats.json
