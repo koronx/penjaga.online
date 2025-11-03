@@ -18,6 +18,7 @@ $stats = [
 $recentQueries = [];
 
 $udpWorker->name = 'PHP-DNS-Hybrid-CacheTTL';
+$udpWorker->count = 4;
 
 // Folder cache
 define('CACHE_DIR', __DIR__ . '/dns-cache');
@@ -40,21 +41,6 @@ $records = [
 ];
 // --- Helper Functions ---
 
-function saveToCache($domain, $response)
-{
-    if (!is_dir(CACHE_DIR)) {
-        mkdir(CACHE_DIR, 0777, true);
-    }
-    $ttl = extractTTL($response);
-    $data = [
-        'expires' => time() + $ttl,
-        'ttl' => $ttl,
-        'data' => base64_encode($response)
-    ];
-    file_put_contents(getCachePath($domain), json_encode($data));
-    echo "  💾 Cached $domain (TTL={$ttl}s)\n";
-}
-
 function saveToCacheAsync($domain, $qtype, $response)
 {
     Coroutine::create(function () use ($domain, $qtype, $response) {
@@ -67,8 +53,8 @@ function saveToCacheAsync($domain, $qtype, $response)
             'ttl' => $ttl,
             'data' => base64_encode($response)
         ];
-        file_put_contents(getCachePath($domain.'/'.$qtype), json_encode($data));
-        echo "  💾 Cached $domain (TTL={$ttl}s) via Coroutine\n";
+        file_put_contents(getCachePath($domain.'/'.$qtype), json_encode($data));        
+        // echo "  💾 Cached $domain (TTL={$ttl}s) via Coroutine\n";
     });
 }
 function encodeDomain($domain)
@@ -174,7 +160,7 @@ function buildResponse($query, $domain, $records, $qtype = 1)
 function getCachePath($domain)
 {
     $cache_path = CACHE_DIR . '/' . md5(strtolower($domain)) . '.json';
-    echo "Cache path for $domain: $cache_path\n";
+    // echo "Cache path for $domain: $cache_path\n";
     return $cache_path;
 }
 
@@ -232,18 +218,20 @@ function extractTTL($response)
 
 function printStats($stats)
 {
-    echo "📊 Stats — Total: {$stats['total']} | Cache Hit: {$stats['cache']} | Upstream: {$stats['upstream']} | Local: {$stats['local']}\n";
+    // echo "📊 Stats — Total: {$stats['total']} | Cache Hit: {$stats['cache']} | Upstream: {$stats['upstream']} | Local: {$stats['local']}\n";
 }
 
 function saveStats($stats, $recentQueries)
 {
-    $data = [
-        'timestamp' => date('c'),
-        'stats' => $stats,
-        'recent_queries' => array_slice($recentQueries, -10)
-    ];
-    file_put_contents(__DIR__ . '/dns-stats.json', json_encode($data));
-    
+    Coroutine::create(function () use ($stats, $recentQueries) {
+        $data = [
+            'timestamp' => date('c'),
+            'stats' => $stats,
+            'recent_queries' => array_slice($recentQueries, -10)
+        ];
+        file_put_contents(__DIR__ . '/dns-stats.json', json_encode($data));
+        // echo "📊 Stats saved\n";
+    });    
 }
 
 function loadStats()
@@ -268,10 +256,12 @@ $udpWorker->onMessage = function ($connection, $data) use ($records, &$stats, &$
     $qclass = unpack('n', substr($data, $offset + 2, 2))[1];
     $stats['total']++;
 
+    $origin_ip = $connection->getRemoteIp();
+
     $recentQueries[] = "$domain/" . $qtype;
     if (count($recentQueries) > 10) array_shift($recentQueries);
 
-    echo "DNS Query: $domain (QTYPE=$qtype)\n";
+    // echo "DNS Query From: $origin_ip $domain (QTYPE=$qtype)\n";
     
     // === LOCAL RECORD ===
     if (isset($records[$domain])) {
@@ -279,9 +269,9 @@ $udpWorker->onMessage = function ($connection, $data) use ($records, &$stats, &$
         if ($response) {
             $connection->send($response);
             $stats['local']++;
-            echo "  → Reply (local, type=$qtype)\n";
+            // echo "  → Reply (local, type=$qtype)\n";
             saveStats($stats, $recentQueries);
-            printStats($stats);
+            // printStats($stats);
             return;
         }
     }
@@ -297,10 +287,10 @@ $udpWorker->onMessage = function ($connection, $data) use ($records, &$stats, &$
         // $connection->send($cache['response']);
         $connection->send($reply);
         $stats['cache']++;
-        echo "  🗃  Reply (cache) $domain\n";
+        // echo "  🗃  Reply (cache) $domain\n";
 
         saveStats($stats, $recentQueries);
-        printStats($stats);
+        // printStats($stats);
 
         return;
     }
@@ -326,14 +316,14 @@ $udpWorker->onMessage = function ($connection, $data) use ($records, &$stats, &$
 
         saveToCacheAsync($domain, $qtype, serialize($cacheData));
         $stats['upstream']++;
-        echo "  ↩ Reply (upstream cached) $domain\n";
+        // echo "  ↩ Reply (upstream cached) $domain\n";
     } else {
-        echo "  ✗ Timeout or no response from upstream\n";
+        // echo "  ✗ Timeout or no response from upstream\n";
     }
 
 
     saveStats($stats, $recentQueries);
-    printStats($stats);
+    // printStats($stats);
 };
 
 // ====== Auto Cache Cleaner (setiap 10 menit) ======
@@ -396,7 +386,7 @@ $httpWorker->onMessage = function ($connection, $request) {
         .json-link { font-size: 0.9em; color: #58a6ff; text-decoration:none; }
         .json-link:hover { text-decoration:underline; }
     </style></head><body>
-    <h1>🧠 DNS Server Dashboard</h1>
+    <h1>🧠 penjaga.online - 103.178.174.235 - DNS Server Dashboard</h1>
     <div>
       <span class='metric'>Total Query: {$stats['total']}</span>
       <span class='metric'>Cache Hit: {$stats['cache']}</span>
@@ -415,9 +405,9 @@ $httpWorker->onMessage = function ($connection, $request) {
     }
 
     $html .= "</table>
-        <p style='color:#8b949e;font-size:0.9em;margin-top:20px'>
-        Auto-refresh setiap 3 detik
-        </p></body></html>";
+        <p style='color:#8b949e;font-size:0.9em;margin-top:20px'>Auto-refresh setiap 3 detik</p>
+        <p style='color:#8b949e;font-size:0.9em;margin-top:20px'>by KoronX - https://penjaga.online - https://github.com/koronx/penjaga.online</p>
+        </body></html>";
 
     $connection->send($html);
 };
